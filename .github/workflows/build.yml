@@ -20,11 +20,12 @@ jobs:
           chmod +x ./gradlew
       - name: Create dummy google-services.json
         run: |
-          PKG=$(grep -oP 'applicationId\s*=\s*"\K[^"]+' app/build.gradle* 2>/dev/null | head -1)
-          if [ -z "$PKG" ]; then PKG=$(grep -oP 'applicationId\s*"\K[^"]+' app/build.gradle* 2>/dev/null | head -1); fi
-          if [ -z "$PKG" ]; then PKG="com.zedtradejunction.app"; fi
+          PKG="com.zedtradejunction.app"
+          if grep -q "applicationId" app/build.gradle*; then
+            FOUND=$(grep -o 'applicationId.*"' app/build.gradle* | head -1 | cut -d'"' -f2)
+            if [ ! -z "$FOUND" ]; then PKG=$FOUND; fi
+          fi
           echo "Using package: $PKG"
-          mkdir -p app/src/debug app/src/release
           cat > app/google-services.json <<EOF
           {
             "project_info": {"project_number": "1234567890", "project_id": "dummy", "storage_bucket": "dummy.appspot.com"},
@@ -32,9 +33,11 @@ jobs:
             "configuration_version": "1"
           }
           EOF
-          cp app/google-services.json app/src/debug/google-services.json
-          cp app/google-services.json app/src/release/google-services.json
-          cat app/google-services.json
+      - name: Create debug keystore
+        run: |
+          keytool -genkey -v -keystore debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Debug, OU=Debug, O=Debug, L=Debug, S=Debug, C=US"
+          keytool -genkey -v -keystore app/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Debug, OU=Debug, O=Debug, L=Debug, S=Debug, C=US"
+          ls -lh *.keystore app/*.keystore
       - name: Build Debug APK
         run: ./gradlew :app:assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
