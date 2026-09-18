@@ -18,8 +18,25 @@ jobs:
             gradle wrapper
           fi
           chmod +x ./gradlew
+      - name: Create dummy google-services.json
+        run: |
+          PKG=$(grep -oP 'applicationId\s*=\s*"\K[^"]+' app/build.gradle* 2>/dev/null | head -1)
+          if [ -z "$PKG" ]; then PKG=$(grep -oP 'applicationId\s*"\K[^"]+' app/build.gradle* 2>/dev/null | head -1); fi
+          if [ -z "$PKG" ]; then PKG="com.zedtradejunction.app"; fi
+          echo "Using package: $PKG"
+          mkdir -p app/src/debug app/src/release
+          cat > app/google-services.json <<EOF
+          {
+            "project_info": {"project_number": "1234567890", "project_id": "dummy", "storage_bucket": "dummy.appspot.com"},
+            "client": [{"client_info": {"mobilesdk_app_id": "1:1234567890:android:abcdef", "android_client_info": {"package_name": "$PKG"}}, "oauth_client": [], "api_key": [{"current_key": "dummy"}], "services": {"appinvite_service": {"other_platform_oauth_client": []}}}],
+            "configuration_version": "1"
+          }
+          EOF
+          cp app/google-services.json app/src/debug/google-services.json
+          cp app/google-services.json app/src/release/google-services.json
+          cat app/google-services.json
       - name: Build Debug APK
-        run: ./gradlew :app:assembleDebug
+        run: ./gradlew :app:assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
         with:
           name: zed-trade-junction-apk
