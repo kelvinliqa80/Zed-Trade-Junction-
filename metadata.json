@@ -1,0 +1,7 @@
+{
+  "name": "Zed Trade",
+  "description": "Zed Trade Junction - Cross-border B2B/B2C trade exchange with real-time Supabase syncing, escrow settlement, and logistics corridors.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
